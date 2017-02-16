@@ -45,6 +45,9 @@ Game::~Game()
 
 	delete triangleMesh;
 	delete squareMesh;
+
+	delete triangleEntity;
+	delete squareEntity;
 }
 
 // --------------------------------------------------------
@@ -171,6 +174,9 @@ void Game::CreateBasicGeometry()
 
 	squareMesh = new Mesh(squareVertices, 4, squareIndices, 6, device);
 
+	triangleEntity = new Entity(triangleMesh);
+	squareEntity = new Entity(squareMesh);
+
 }
 
 
@@ -197,6 +203,10 @@ void Game::OnResize()
 // --------------------------------------------------------
 void Game::Update(float deltaTime, float totalTime)
 {
+
+	triangleEntity->UpdateWorldMatrix();
+
+
 	// Quit if the escape key is pressed
 	if (GetAsyncKeyState(VK_ESCAPE))
 		Quit();
@@ -247,18 +257,18 @@ void Game::Draw(float deltaTime, float totalTime)
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 
-	ID3D11Buffer* vertexBuffer = triangleMesh->GetVertexBuffer();
+	ID3D11Buffer* vertexBuffer = triangleEntity->GetMesh()->GetVertexBuffer();
 	context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-	context->IASetIndexBuffer(triangleMesh->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
+	context->IASetIndexBuffer(triangleEntity->GetMesh()->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
 
 	context->DrawIndexed(
 		triangleMesh->GetIndexCount(),     // The number of indices to use (we could draw a subset if we wanted)
 		0,     // Offset to the first index we want to use
 		0);    // Offset to add to each index when looking up vertices
 
-	ID3D11Buffer* vertexBuffer2 = squareMesh->GetVertexBuffer();
+	ID3D11Buffer* vertexBuffer2 = squareEntity->GetMesh()->GetVertexBuffer();
 	context->IASetVertexBuffers(0, 1, &vertexBuffer2, &stride, &offset);
-	context->IASetIndexBuffer(squareMesh->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
+	context->IASetIndexBuffer(squareEntity->GetMesh()->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
 
 	context->DrawIndexed(
 		squareMesh->GetIndexCount(),     // The number of indices to use (we could draw a subset if we wanted)

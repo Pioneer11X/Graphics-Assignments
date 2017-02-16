@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Mesh.h"
+#include "Entity.h"
 #include "SimpleShader.h"
 #include <DirectXMath.h>
 
@@ -47,6 +47,9 @@ private:
 
 	Mesh * triangleMesh;
 	Mesh * squareMesh;
+
+	Entity* triangleEntity;
+	Entity* squareEntity;
 
 };
 
