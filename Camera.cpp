@@ -1,4 +1,4 @@
-#include "Camera.h"
+﻿#include "Camera.h"
 
 
 
@@ -49,6 +49,26 @@ Camera::Camera(XMFLOAT3 _position, float _rotationX, float _rotationY)
 
 	dirty = true;
 	Update();
+
+}
+
+void Camera::MoveLeft(float factor)
+{
+	/*
+	Left/right vectors can be found using the cross product of forward (camera�s direction) and the world�s up axis (0,1,0).
+	*/
+	XMVECTOR LeftSide;
+	LeftSide = XMVector3Cross(XMLoadFloat3(&direction), XMVectorSet(0, 1, 0, 0));
+	LeftSide = XMVector3Normalize(LeftSide);
+
+	XMFLOAT3 LeftSideFloat;
+	XMStoreFloat3(&LeftSideFloat, LeftSide);
+
+	position.x += LeftSideFloat.x * factor;
+	position.y += LeftSideFloat.y * factor;
+	position.z += LeftSideFloat.z * factor;
+
+	dirty = true;
 
 }
 

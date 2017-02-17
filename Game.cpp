@@ -52,6 +52,8 @@ Game::~Game()
 	delete triangleEntity3;
 	delete triangleEntity4;
 	delete squareEntity;
+
+	delete newCamera;
 }
 
 // --------------------------------------------------------
@@ -228,6 +230,14 @@ void Game::Update(float deltaTime, float totalTime)
 
 	if (GetAsyncKeyState('S') & 0x8000) {
 		newCamera->MoveForward(-1.0f * deltaTime);
+	}
+
+	if (GetAsyncKeyState('D') & 0x8000) {
+		newCamera->MoveLeft(-1.0f * deltaTime);
+	}
+
+	if (GetAsyncKeyState('A') & 0x8000) {
+		newCamera->MoveLeft(deltaTime);
 	}
 
 	// Quit if the escape key is pressed

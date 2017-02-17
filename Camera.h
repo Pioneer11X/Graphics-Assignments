@@ -26,6 +26,7 @@ public:
 	void Update();
 
 	void MoveForward(float factor);
+	void MoveLeft(float factor);
 
 	Camera(XMFLOAT3 _position,float _rotationX, float _rotationY);
 	~Camera();
