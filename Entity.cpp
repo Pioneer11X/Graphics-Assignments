@@ -56,12 +56,36 @@ void Entity::SetScale(float _x, float _y, float _z)
 	dirty = true;
 }
 
-Entity::Entity(Mesh * _entityMesh)
+void Entity::MoveRight(float factor)
+{
+	float newPositionX = position.x + factor * 0.0001f;
+	SetTranslation(newPositionX, position.y, position.z);
+}
+
+void Entity::MoveUp(float factor)
+{
+	float newPositionY = position.y + factor * 0.0001f;
+	SetTranslation(position.x, newPositionY, position.z);
+}
+
+void Entity::MoveRightUsingMatrix(float factor)
+{
+	positionMatrix.m[3][0] += factor * 0.0001f;
+	dirty = true;
+}
+
+void Entity::MoveUpUsingMatrix(float factor)
+{
+	positionMatrix.m[3][1] += factor * 0.0001f;
+	dirty = true;
+}
+
+Entity::Entity(Mesh * _entityMesh, XMFLOAT3 _position, XMFLOAT3 _rotation, XMFLOAT3 _scale)
 {
 	entityMesh = _entityMesh;
-	position = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	rotation = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	scale = XMFLOAT3(0.5f, 0.5f, 0.5f);
+	position = _position;
+	rotation = _rotation;
+	scale = _scale;
 
 	SetTranslation(position.x, position.y, position.z);
 	SetRotation(rotation.z);

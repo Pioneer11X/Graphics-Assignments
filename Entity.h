@@ -33,7 +33,12 @@ public:
 	void SetRotation(float _rotationZ);
 	void SetScale(float _x, float _y, float _z);
 
-	Entity(Mesh * _entityMesh);
+	void MoveRight(float factor);
+	void MoveUp(float factor);
+	void MoveRightUsingMatrix(float factor);
+	void MoveUpUsingMatrix(float factor);
+
+	Entity(Mesh * _entityMesh, XMFLOAT3 _position = XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3 _rotation = XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3 _scale = XMFLOAT3(0.5f, 0.5f, 0.5f));
 	~Entity();
 };
 

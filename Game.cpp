@@ -47,6 +47,10 @@ Game::~Game()
 	delete squareMesh;
 
 	delete triangleEntity;
+	delete triangleEntity1;
+	delete triangleEntity2;
+	delete triangleEntity3;
+	delete triangleEntity4;
 	delete squareEntity;
 }
 
@@ -114,13 +118,13 @@ void Game::CreateMatrices()
 	XMMATRIX W = XMMatrixIdentity();
 	XMStoreFloat4x4(&worldMatrix, XMMatrixTranspose(W)); // Transpose for HLSL!
 
-														 // Create the View matrix
-														 // - In an actual game, recreate this matrix every time the camera 
-														 //    moves (potentially every frame)
-														 // - We're using the LOOK TO function, which takes the position of the
-														 //    camera and the direction vector along which to look (as well as "up")
-														 // - Another option is the LOOK AT function, to look towards a specific
-														 //    point in 3D space
+	// Create the View matrix
+	// - In an actual game, recreate this matrix every time the camera 
+	//    moves (potentially every frame)
+	// - We're using the LOOK TO function, which takes the position of the
+	//    camera and the direction vector along which to look (as well as "up")
+	// - Another option is the LOOK AT function, to look towards a specific
+	//    point in 3D space
 	XMVECTOR pos = XMVectorSet(0, 0, -5, 0);
 	XMVECTOR dir = XMVectorSet(0, 0, 1, 0);
 	XMVECTOR up = XMVectorSet(0, 1, 0, 0);
@@ -130,9 +134,9 @@ void Game::CreateMatrices()
 		up);     // "Up" direction in 3D space (prevents roll)
 	XMStoreFloat4x4(&viewMatrix, XMMatrixTranspose(V)); // Transpose for HLSL!
 
-														// Create the Projection matrix
-														// - This should match the window's aspect ratio, and also update anytime
-														//   the window resizes (which is already happening in OnResize() below)
+	// Create the Projection matrix
+	// - This should match the window's aspect ratio, and also update anytime
+	//   the window resizes (which is already happening in OnResize() below)
 	XMMATRIX P = XMMatrixPerspectiveFovLH(
 		0.25f * 3.1415926535f,		// Field of View Angle
 		(float)width / height,		// Aspect ratio
@@ -174,7 +178,17 @@ void Game::CreateBasicGeometry()
 
 	squareMesh = new Mesh(squareVertices, 4, squareIndices, 6, device);
 
-	triangleEntity = new Entity(triangleMesh);
+	triangleEntity  = new Entity(triangleMesh);
+	entityVector.push_back(triangleEntity);
+	triangleEntity1 = new Entity(triangleMesh, XMFLOAT3(0.0f, 1.0f, 0.0f));
+	entityVector.push_back(triangleEntity1);
+	triangleEntity2 = new Entity(triangleMesh, XMFLOAT3(1.0f, 0.0f, 0.0f));
+	entityVector.push_back(triangleEntity2);
+	triangleEntity3 = new Entity(triangleMesh, XMFLOAT3(0.0f, -1.0f, 0.0f));
+	entityVector.push_back(triangleEntity3);
+	triangleEntity4 = new Entity(triangleMesh, XMFLOAT3(-1.0f, 0.0f, 0.0f));
+	entityVector.push_back(triangleEntity4);
+
 	squareEntity = new Entity(squareMesh);
 
 }
@@ -212,8 +226,23 @@ void Game::Update(float deltaTime, float totalTime)
 
 	//squareEntity->SetTranslation(0.5f, 1.0f, 0.0f);
 
-	triangleEntity->UpdateWorldMatrix();
+	triangleEntity1->MoveRight(5);
+	triangleEntity2->MoveRight(-5);
+	triangleEntity3->MoveUp(5);
+	triangleEntity4->MoveUp(-5);
+
+	/*triangleEntity1->MoveRightUsingMatrix(5);
+	triangleEntity2->MoveRightUsingMatrix(-5);
+	triangleEntity3->MoveUpUsingMatrix(5);
+	triangleEntity4->MoveUpUsingMatrix(-5);*/
+
 	squareEntity->UpdateWorldMatrix();
+
+	std::vector<Entity*>::iterator entityIterator;
+	for (entityIterator = entityVector.begin(); entityIterator < entityVector.end(); entityIterator++)
+	{
+		(*entityIterator)->UpdateWorldMatrix();
+	}
 
 	// Quit if the escape key is pressed
 	if (GetAsyncKeyState(VK_ESCAPE))
@@ -238,7 +267,12 @@ void Game::Draw(float deltaTime, float totalTime)
 		1.0f,
 		0);
 
-	DrawEntity(triangleEntity);
+	std::vector<Entity*>::iterator entityIterator;
+	for (entityIterator = entityVector.begin(); entityIterator < entityVector.end() ; entityIterator++ )
+	{
+		DrawEntity(*entityIterator);
+	}
+
 	DrawEntity(squareEntity);
 
 	// Present the back buffer to the user

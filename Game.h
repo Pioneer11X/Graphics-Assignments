@@ -3,6 +3,7 @@
 #include "Entity.h"
 #include "SimpleShader.h"
 #include <DirectXMath.h>
+#include "vector"
 
 
 class Game
@@ -50,7 +51,13 @@ private:
 	Mesh * squareMesh;
 
 	Entity* triangleEntity;
+	Entity* triangleEntity1;
+	Entity* triangleEntity2;
+	Entity* triangleEntity3;
+	Entity* triangleEntity4;
 	Entity* squareEntity;
+
+	std::vector<Entity *> entityVector;
 
 };
 
