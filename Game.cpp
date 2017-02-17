@@ -109,14 +109,8 @@ void Game::LoadShaders()
 // --------------------------------------------------------
 void Game::CreateMatrices()
 {
-	// Set up world matrix
-	// - In an actual game, each object will need one of these and they should
-	//   update when/if the object moves (every frame)
-	// - You'll notice a "transpose" happening below, which is redundant for
-	//   an identity matrix.  This is just to show that HLSL expects a different
-	//   matrix (column major vs row major) than the DirectX Math library
-	XMMATRIX W = XMMatrixIdentity();
-	XMStoreFloat4x4(&worldMatrix, XMMatrixTranspose(W)); // Transpose for HLSL!
+	XMFLOAT3 cameraPos = XMFLOAT3(0.0f, 0.0f, -5.0f);
+	newCamera = new Camera( cameraPos, 0.0f, 0.0f );
 
 	// Create the View matrix
 	// - In an actual game, recreate this matrix every time the camera 
@@ -284,7 +278,7 @@ void Game::Draw(float deltaTime, float totalTime)
 void Game::DrawEntity(Entity * _entity)
 {
 	vertexShader->SetMatrix4x4("world", _entity->GetWorldMatrix());
-	vertexShader->SetMatrix4x4("view", viewMatrix);
+	vertexShader->SetMatrix4x4("view", newCamera->GetViewMatrix());
 	vertexShader->SetMatrix4x4("projection", projectionMatrix);
 	vertexShader->CopyAllBufferData();
 

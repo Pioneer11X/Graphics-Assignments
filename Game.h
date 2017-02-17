@@ -4,6 +4,7 @@
 #include "SimpleShader.h"
 #include <DirectXMath.h>
 #include "vector"
+#include "Camera.h"
 
 
 class Game
@@ -39,7 +40,6 @@ private:
 	SimplePixelShader* pixelShader;
 
 	// The matrices to go from model space to screen space
-	DirectX::XMFLOAT4X4 worldMatrix;
 	DirectX::XMFLOAT4X4 viewMatrix;
 	DirectX::XMFLOAT4X4 projectionMatrix;
 
@@ -58,6 +58,8 @@ private:
 	Entity* squareEntity;
 
 	std::vector<Entity *> entityVector;
+
+	Camera* newCamera;
 
 };
 
