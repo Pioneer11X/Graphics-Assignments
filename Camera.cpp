@@ -35,9 +35,9 @@ void Camera::Update()
 void Camera::MoveForward(float factor)
 {
 	// We can add the current direction the camera is looking at to the current position.
-	position.x += direction.x * factor * 0.001;
-	position.y += direction.y * factor * 0.001;
-	position.z += direction.z * factor * 0.001;
+	position.x += direction.x * factor;
+	position.y += direction.y * factor;
+	position.z += direction.z * factor;
 	dirty = true;
 }
 

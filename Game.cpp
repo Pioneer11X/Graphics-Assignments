@@ -112,22 +112,6 @@ void Game::CreateMatrices()
 	XMFLOAT3 cameraPos = XMFLOAT3(0.0f, 0.0f, -5.0f);
 	newCamera = new Camera( cameraPos, 0.0f, 0.0f );
 
-	// Create the View matrix
-	// - In an actual game, recreate this matrix every time the camera 
-	//    moves (potentially every frame)
-	// - We're using the LOOK TO function, which takes the position of the
-	//    camera and the direction vector along which to look (as well as "up")
-	// - Another option is the LOOK AT function, to look towards a specific
-	//    point in 3D space
-	XMVECTOR pos = XMVectorSet(0, 0, -5, 0);
-	XMVECTOR dir = XMVectorSet(0, 0, 1, 0);
-	XMVECTOR up = XMVectorSet(0, 1, 0, 0);
-	XMMATRIX V = XMMatrixLookToLH(
-		pos,     // The position of the "camera"
-		dir,     // Direction the camera is looking
-		up);     // "Up" direction in 3D space (prevents roll)
-	XMStoreFloat4x4(&viewMatrix, XMMatrixTranspose(V)); // Transpose for HLSL!
-
 	// Create the Projection matrix
 	// - This should match the window's aspect ratio, and also update anytime
 	//   the window resizes (which is already happening in OnResize() below)
@@ -238,9 +222,20 @@ void Game::Update(float deltaTime, float totalTime)
 		(*entityIterator)->UpdateWorldMatrix();
 	}
 
+	if (GetAsyncKeyState('W') & 0x8000) {
+		newCamera->MoveForward(deltaTime);
+	}
+
+	if (GetAsyncKeyState('S') & 0x8000) {
+		newCamera->MoveForward(-1.0f * deltaTime);
+	}
+
 	// Quit if the escape key is pressed
 	if (GetAsyncKeyState(VK_ESCAPE))
 		Quit();
+
+	newCamera->Update();
+
 }
 
 // --------------------------------------------------------
