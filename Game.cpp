@@ -204,8 +204,16 @@ void Game::OnResize()
 void Game::Update(float deltaTime, float totalTime)
 {
 
-	triangleEntity->UpdateWorldMatrix();
+	float sinTime = (sin(totalTime * 2) + 2.0f) / 10.0f;
 
+	triangleEntity->SetRotation(sinTime);
+	triangleEntity->SetScale(sinTime, sinTime, sinTime);
+	triangleEntity->SetTranslation(sinTime, sinTime, sinTime);
+
+	//squareEntity->SetTranslation(0.5f, 1.0f, 0.0f);
+
+	triangleEntity->UpdateWorldMatrix();
+	squareEntity->UpdateWorldMatrix();
 
 	// Quit if the escape key is pressed
 	if (GetAsyncKeyState(VK_ESCAPE))
@@ -230,57 +238,36 @@ void Game::Draw(float deltaTime, float totalTime)
 		1.0f,
 		0);
 
-	// Send data to shader variables
-	//  - Do this ONCE PER OBJECT you're drawing
-	//  - This is actually a complex process of copying data to a local buffer
-	//    and then copying that entire buffer to the GPU.  
-	//  - The "SimpleShader" class handles all of that for you.
-	vertexShader->SetMatrix4x4("world", worldMatrix);
+	DrawEntity(triangleEntity);
+	DrawEntity(squareEntity);
+
+	// Present the back buffer to the user
+	//  - Puts the final frame we're drawing into the window so the user can see it
+	//  - Do this exactly ONCE PER FRAME (always at the very end of the frame)
+	swapChain->Present(0, 0);
+}
+
+void Game::DrawEntity(Entity * _entity)
+{
+	vertexShader->SetMatrix4x4("world", _entity->GetWorldMatrix());
 	vertexShader->SetMatrix4x4("view", viewMatrix);
 	vertexShader->SetMatrix4x4("projection", projectionMatrix);
-
-	// Once you've set all of the data you care to change for
-	// the next draw call, you need to actually send it to the GPU
-	//  - If you skip this, the "SetMatrix" calls above won't make it to the GPU!
 	vertexShader->CopyAllBufferData();
 
-	// Set the vertex and pixel shaders to use for the next Draw() command
-	//  - These don't technically need to be set every frame...YET
-	//  - Once you start applying different shaders to different objects,
-	//    you'll need to swap the current shaders before each draw
 	vertexShader->SetShader();
 	pixelShader->SetShader();
 
-	// Set buffers in the input assembler
-	//  - Do this ONCE PER OBJECT you're drawing, since each object might
-	//    have different geometry.
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 
-	ID3D11Buffer* vertexBuffer = triangleEntity->GetMesh()->GetVertexBuffer();
+	ID3D11Buffer* vertexBuffer = _entity->GetMesh()->GetVertexBuffer();
 	context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-	context->IASetIndexBuffer(triangleEntity->GetMesh()->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
+	context->IASetIndexBuffer(_entity->GetMesh()->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
 
 	context->DrawIndexed(
-		triangleMesh->GetIndexCount(),     // The number of indices to use (we could draw a subset if we wanted)
+		_entity->GetMesh()->GetIndexCount(),     // The number of indices to use (we could draw a subset if we wanted)
 		0,     // Offset to the first index we want to use
 		0);    // Offset to add to each index when looking up vertices
-
-	ID3D11Buffer* vertexBuffer2 = squareEntity->GetMesh()->GetVertexBuffer();
-	context->IASetVertexBuffers(0, 1, &vertexBuffer2, &stride, &offset);
-	context->IASetIndexBuffer(squareEntity->GetMesh()->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
-
-	context->DrawIndexed(
-		squareMesh->GetIndexCount(),     // The number of indices to use (we could draw a subset if we wanted)
-		0,     // Offset to the first index we want to use
-		0);    // Offset to add to each index when looking up vertices
-
-
-
-			   // Present the back buffer to the user
-			   //  - Puts the final frame we're drawing into the window so the user can see it
-			   //  - Do this exactly ONCE PER FRAME (always at the very end of the frame)
-	swapChain->Present(0, 0);
 }
 
 
