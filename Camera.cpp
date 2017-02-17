@@ -72,6 +72,22 @@ void Camera::MoveLeft(float factor)
 
 }
 
+void Camera::IncrementRotationX(float factor)
+{
+	if (rotationX + factor < 0.3f & rotationX + factor > -0.3f) {
+		rotationX += factor;
+		dirty = true;
+	}
+}
+
+void Camera::IncrementRotationY(float factor)
+{
+	if (rotationY + factor < 0.6f & rotationY + factor > -0.6f) {
+		rotationY += factor;
+		dirty = true;
+	}
+}
+
 
 Camera::~Camera()
 {

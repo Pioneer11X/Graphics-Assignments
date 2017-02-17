@@ -28,6 +28,9 @@ public:
 	void MoveForward(float factor);
 	void MoveLeft(float factor);
 
+	void IncrementRotationX(float factor);
+	void IncrementRotationY(float factor);
+
 	Camera(XMFLOAT3 _position,float _rotationX, float _rotationY);
 	~Camera();
 };

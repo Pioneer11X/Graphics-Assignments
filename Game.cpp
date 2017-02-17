@@ -313,7 +313,7 @@ void Game::DrawEntity(Entity * _entity)
 // --------------------------------------------------------
 void Game::OnMouseDown(WPARAM buttonState, int x, int y)
 {
-	// Add any custom code here...
+
 
 	// Save the previous mouse position, so we have it for the future
 	prevMousePos.x = x;
@@ -345,7 +345,14 @@ void Game::OnMouseUp(WPARAM buttonState, int x, int y)
 void Game::OnMouseMove(WPARAM buttonState, int x, int y)
 {
 	// Add any custom code here...
+	
+	if ( buttonState & 0x0001 ) {
+		float diffX = x - prevMousePos.x;
+		float diffY = y - prevMousePos.y;
 
+		newCamera->IncrementRotationX(diffY * 0.001f);
+		newCamera->IncrementRotationY(diffX * 0.001f);
+	}
 	// Save the previous mouse position, so we have it for the future
 	prevMousePos.x = x;
 	prevMousePos.y = y;
