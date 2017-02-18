@@ -1,4 +1,4 @@
-#include "Game.h"
+﻿#include "Game.h"
 #include "Vertex.h"
 
 // For the DirectX Math library
@@ -11,6 +11,9 @@ using namespace DirectX;
 // DirectX itself, and our window, are not ready yet!
 //
 // hInstance - the application's OS-level handle (unique ID)
+// 
+// ఇక్కడ ముందు వున్న క్లాసు లో వేరియబుల్స్ ఈ క్లాస్స్లో పెడతాం.
+// 
 // --------------------------------------------------------
 Game::Game(HINSTANCE hInstance)
 	: DXCore(
@@ -26,6 +29,7 @@ Game::Game(HINSTANCE hInstance)
 
 #if defined(DEBUG) || defined(_DEBUG)
 	// Do we want a console window?  Probably only in debug mode
+	// మనకి కన్సోల్ విండో కావాలంటే ఉంచు. లేకపోతే తీసెయ్యి.
 	CreateConsoleWindow(500, 120, 32, 120);
 	printf("Console window created successfully.  Feel free to printf() here.");
 #endif
@@ -35,9 +39,13 @@ Game::Game(HINSTANCE hInstance)
 // Destructor - Clean up anything our game has created:
 //  - Release all DirectX objects created here
 //  - Delete any objects to prevent memory leaks
+// 
+//	- అన్నీ డిలీట్ చెయ్యాలి.
+// 
 // --------------------------------------------------------
 Game::~Game()
 {
+	// అన్నీ డిలీట్ చెయ్యాలి.
 	// Delete our simple shader objects, which
 	// will clean up their own internal DirectX stuff
 	delete vertexShader;
@@ -45,6 +53,12 @@ Game::~Game()
 
 	delete triangleMesh;
 	delete squareMesh;
+	delete cubeMesh;
+	delete coneMesh;
+	delete cylinderMesh;
+	delete helixMesh;
+	delete sphereMesh;
+	delete torusMesh;
 
 	delete triangleEntity;
 	delete triangleEntity1;
@@ -54,6 +68,22 @@ Game::~Game()
 	delete squareEntity;
 
 	delete newCamera;
+	delete newMaterial;
+	delete anotherMaterial;
+
+	//std::vector<Entity*>::iterator entityIterator;
+	//for (entityIterator = entityVector.begin(); entityIterator < entityVector.end(); entityIterator++)
+	//{
+	//	(*entityIterator)->UpdateWorldMatrix();
+	//	delete (*entityIterator);
+	//}
+
+	SRV->Release();
+	anotherSRV->Release();
+	sampler->Release();
+
+	//delete SRV;
+	//delete sampler;
 }
 
 // --------------------------------------------------------
@@ -62,11 +92,34 @@ Game::~Game()
 // --------------------------------------------------------
 void Game::Init()
 {
+	LoadShaders();
+
+	DirectionalLight newDirectionalLight = {
+		XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f),
+		XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
+		XMFLOAT3(1.0f, 0.3f, 0.2f)
+	};
+
+	DirectionalLight anotherDirectionalLight = {
+		XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f),
+		XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),
+		XMFLOAT3(0.3f, -1.0f, -1.0f)
+	};
+
+	directionalLights.push_back(newDirectionalLight);
+	directionalLights.push_back(anotherDirectionalLight);
+
+	//pixelShader->SetData("dlight", &newDirectionalLight, sizeof(DirectionalLight));
+	
+
 	// Helper methods for loading shaders, creating some basic
 	// geometry to draw and some simple camera matrices.
 	//  - You'll be expanding and/or replacing these later
-	LoadShaders();
+	
+	// మాట్రిసీస్ ని తయారు చెయ్యి.
 	CreateMatrices();
+
+	// ఆబ్జెక్ట్లను వాడటానికి తయారు చెయ్యి.
 	CreateBasicGeometry();
 
 	// Tell the input assembler stage of the pipeline what kind of
@@ -91,6 +144,24 @@ void Game::LoadShaders()
 	if (!pixelShader->LoadShaderFile(L"Debug/PixelShader.cso"))
 		pixelShader->LoadShaderFile(L"PixelShader.cso");
 
+	// Material ముందుగా texture తయారుచేస్తే, దానికి  వాడుకోవచ్చు.
+	// We want to create a texture just before creating a Material.
+	CreateWICTextureFromFile(device, context, L"Debug/Textures/calinou/egypt01_c.png", 0, &SRV);
+	CreateWICTextureFromFile(device, context, L"Debug/Textures/rock.jpg", 0, &anotherSRV);
+
+	D3D11_SAMPLER_DESC sampleDesc = {};
+	sampleDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampleDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampleDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampleDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	sampleDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+	sampleDesc.MaxAnisotropy = 16;
+
+	device->CreateSamplerState(&sampleDesc, &sampler);
+
+	newMaterial = new Material(vertexShader, pixelShader, SRV, sampler);
+	anotherMaterial = new Material(vertexShader, pixelShader, anotherSRV, sampler);
+
 	// You'll notice that the code above attempts to load each
 	// compiled shader file (.cso) from two different relative paths.
 
@@ -112,17 +183,9 @@ void Game::LoadShaders()
 void Game::CreateMatrices()
 {
 	XMFLOAT3 cameraPos = XMFLOAT3(0.0f, 0.0f, -5.0f);
-	newCamera = new Camera( cameraPos, 0.0f, 0.0f );
+	newCamera = new Camera( cameraPos, 0.0f, 0.0f, width, height );
 
-	// Create the Projection matrix
-	// - This should match the window's aspect ratio, and also update anytime
-	//   the window resizes (which is already happening in OnResize() below)
-	XMMATRIX P = XMMatrixPerspectiveFovLH(
-		0.25f * 3.1415926535f,		// Field of View Angle
-		(float)width / height,		// Aspect ratio
-		0.1f,						// Near clip plane distance
-		100.0f);					// Far clip plane distance
-	XMStoreFloat4x4(&projectionMatrix, XMMatrixTranspose(P)); // Transpose for HLSL!
+
 }
 
 
@@ -132,15 +195,20 @@ void Game::CreateMatrices()
 void Game::CreateBasicGeometry()
 {
 
+	// ఇందులో అన్నిటినీ తయారు చేసుకో.
+
 	XMFLOAT4 red = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
 	XMFLOAT4 green = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
 	XMFLOAT4 blue = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
 
+	XMFLOAT3 defaultNormal = XMFLOAT3(0.0f, 0.0f, -1.0f);
+	XMFLOAT2 defaultUV = XMFLOAT2(0.0f, 0.0f);
+
 	Vertex vertices[] =
 	{
-		{ XMFLOAT3(+0.0f, +1.0f, +0.0f), red },
-		{ XMFLOAT3(+1.5f, -1.0f, +0.0f), blue },
-		{ XMFLOAT3(-1.5f, -1.0f, +0.0f), green }
+		{ XMFLOAT3(+0.0f, +1.0f, +0.0f), defaultNormal, defaultUV },
+		{ XMFLOAT3(+1.5f, -1.0f, +0.0f), defaultNormal, defaultUV },
+		{ XMFLOAT3(-1.5f, -1.0f, +0.0f), defaultNormal, defaultUV }
 	};
 
 	int indices[] = { 0, 1, 2 };
@@ -148,28 +216,36 @@ void Game::CreateBasicGeometry()
 	triangleMesh = new Mesh(vertices, 3, indices, 3, device);
 
 	Vertex squareVertices[] = {
-		{ XMFLOAT3(+2.0f, +1.0f, +0.0f), red },
-		{ XMFLOAT3(+2.0f, +2.0f, +0.0f), green },
-		{ XMFLOAT3(+3.0f, +2.0f, +0.0f), green },
-		{ XMFLOAT3(+3.0f, +1.0f, -0.0f), blue }
+		{ XMFLOAT3(+2.0f, +1.0f, +0.0f), defaultNormal, defaultUV },
+		{ XMFLOAT3(+2.0f, +2.0f, +0.0f), defaultNormal, defaultUV },
+		{ XMFLOAT3(+3.0f, +2.0f, +0.0f), defaultNormal, defaultUV },
+		{ XMFLOAT3(+3.0f, +1.0f, -0.0f), defaultNormal, defaultUV }
 	};
 
 	int squareIndices[] = { 0, 1, 2 , 0, 2, 3 };
 
 	squareMesh = new Mesh(squareVertices, 4, squareIndices, 6, device);
 
-	triangleEntity  = new Entity(triangleMesh);
+	cubeMesh = new Mesh("Debug/cube.obj", device);
+	coneMesh = new Mesh("Debug/cone.obj", device);
+	cylinderMesh = new Mesh("Debug/cylinder.obj", device);
+	helixMesh = new Mesh("Debug/helix.obj", device);
+	sphereMesh = new Mesh("Debug/sphere.obj", device);
+	torusMesh = new Mesh("Debug/torus.obj", device);
+	
+
+	triangleEntity  = new Entity(triangleMesh, newMaterial);
 	entityVector.push_back(triangleEntity);
-	triangleEntity1 = new Entity(triangleMesh, XMFLOAT3(0.0f, 1.0f, 0.0f));
+	triangleEntity1 = new Entity(coneMesh, newMaterial, XMFLOAT3(0.0f, 1.0f, 0.0f));
 	entityVector.push_back(triangleEntity1);
-	triangleEntity2 = new Entity(triangleMesh, XMFLOAT3(1.0f, 0.0f, 0.0f));
+	triangleEntity2 = new Entity(cylinderMesh, anotherMaterial, XMFLOAT3(1.0f, 0.0f, 0.0f));
 	entityVector.push_back(triangleEntity2);
-	triangleEntity3 = new Entity(triangleMesh, XMFLOAT3(0.0f, -1.0f, 0.0f));
+	triangleEntity3 = new Entity(helixMesh, newMaterial, XMFLOAT3(0.0f, -1.0f, 0.0f));
 	entityVector.push_back(triangleEntity3);
-	triangleEntity4 = new Entity(triangleMesh, XMFLOAT3(-1.0f, 0.0f, 0.0f));
+	triangleEntity4 = new Entity(torusMesh, newMaterial, XMFLOAT3(-1.0f, 0.0f, 0.0f));
 	entityVector.push_back(triangleEntity4);
 
-	squareEntity = new Entity(squareMesh);
+	squareEntity = new Entity(cubeMesh, newMaterial);
 
 }
 
@@ -180,16 +256,20 @@ void Game::CreateBasicGeometry()
 // --------------------------------------------------------
 void Game::OnResize()
 {
+	// రీసైజ్ చేసినప్పుడు ఎం చెయ్యాలి?
 	// Handle base-level DX resize stuff
 	DXCore::OnResize();
 
-	// Update our projection matrix since the window size changed
-	XMMATRIX P = XMMatrixPerspectiveFovLH(
-		0.25f * 3.1415926535f,	// Field of View Angle
-		(float)width / height,	// Aspect ratio
-		0.1f,				  	// Near clip plane distance
-		100.0f);			  	// Far clip plane distance
-	XMStoreFloat4x4(&projectionMatrix, XMMatrixTranspose(P)); // Transpose for HLSL!
+	//// Update our projection matrix since the window size changed
+	//XMMATRIX P = XMMatrixPerspectiveFovLH(
+	//	0.25f * 3.1415926535f,	// Field of View Angle
+	//	(float)width / height,	// Aspect ratio
+	//	0.1f,				  	// Near clip plane distance
+	//	100.0f);			  	// Far clip plane distance
+	//XMStoreFloat4x4(&projectionMatrix, XMMatrixTranspose(P)); // Transpose for HLSL!
+
+	newCamera->SetProjectionMatrix(width, height);
+
 }
 
 // --------------------------------------------------------
@@ -197,7 +277,7 @@ void Game::OnResize()
 // --------------------------------------------------------
 void Game::Update(float deltaTime, float totalTime)
 {
-
+	// యూనిటీ లో అప్డేట్ లూప్ లాంటిది.
 	float sinTime = (sin(totalTime * 2) + 2.0f) / 10.0f;
 
 	triangleEntity->SetRotation(sinTime);
@@ -211,12 +291,16 @@ void Game::Update(float deltaTime, float totalTime)
 	triangleEntity3->MoveUp(5);
 	triangleEntity4->MoveUp(-5);
 
-	/*triangleEntity1->MoveRightUsingMatrix(5);
+	/*
+	triangleEntity1->MoveRightUsingMatrix(5);
 	triangleEntity2->MoveRightUsingMatrix(-5);
 	triangleEntity3->MoveUpUsingMatrix(5);
-	triangleEntity4->MoveUpUsingMatrix(-5);*/
+	triangleEntity4->MoveUpUsingMatrix(-5);
+	*/
 
 	squareEntity->UpdateWorldMatrix();
+
+	float speed = 2.0f;
 
 	std::vector<Entity*>::iterator entityIterator;
 	for (entityIterator = entityVector.begin(); entityIterator < entityVector.end(); entityIterator++)
@@ -225,19 +309,19 @@ void Game::Update(float deltaTime, float totalTime)
 	}
 
 	if (GetAsyncKeyState('W') & 0x8000) {
-		newCamera->MoveForward(deltaTime);
+		newCamera->MoveForward(deltaTime * speed);
 	}
 
 	if (GetAsyncKeyState('S') & 0x8000) {
-		newCamera->MoveForward(-1.0f * deltaTime);
+		newCamera->MoveForward(-1.0f * deltaTime * speed);
 	}
 
 	if (GetAsyncKeyState('D') & 0x8000) {
-		newCamera->MoveLeft(-1.0f * deltaTime);
+		newCamera->MoveLeft(-1.0f * deltaTime * speed);
 	}
 
 	if (GetAsyncKeyState('A') & 0x8000) {
-		newCamera->MoveLeft(deltaTime);
+		newCamera->MoveLeft(deltaTime * speed);
 	}
 
 	// Quit if the escape key is pressed
@@ -256,6 +340,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	// Background color (Cornflower Blue in this case) for clearing
 	const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
 
+	// కాంటెక్స్ట్ లో డెప్త్ ఇంకా, రెండర్ టార్గెట్లను క్లియర్ చెయ్యాలి.
 	// Clear the render target and depth buffer (erases what's on the screen)
 	//  - Do this ONCE PER FRAME
 	//  - At the beginning of Draw (before drawing *anything*)
@@ -282,13 +367,8 @@ void Game::Draw(float deltaTime, float totalTime)
 
 void Game::DrawEntity(Entity * _entity)
 {
-	vertexShader->SetMatrix4x4("world", _entity->GetWorldMatrix());
-	vertexShader->SetMatrix4x4("view", newCamera->GetViewMatrix());
-	vertexShader->SetMatrix4x4("projection", projectionMatrix);
-	vertexShader->CopyAllBufferData();
 
-	vertexShader->SetShader();
-	pixelShader->SetShader();
+	_entity->PrepareShaders(newCamera, directionalLights);
 
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
@@ -345,14 +425,14 @@ void Game::OnMouseUp(WPARAM buttonState, int x, int y)
 void Game::OnMouseMove(WPARAM buttonState, int x, int y)
 {
 	// Add any custom code here...
-	
 	if ( buttonState & 0x0001 ) {
-		float diffX = x - prevMousePos.x;
-		float diffY = y - prevMousePos.y;
+		float diffX = x - float(prevMousePos.x);
+		float diffY = y - float(prevMousePos.y);
 
 		newCamera->IncrementRotationX(diffY * 0.001f);
 		newCamera->IncrementRotationY(diffX * 0.001f);
 	}
+
 	// Save the previous mouse position, so we have it for the future
 	prevMousePos.x = x;
 	prevMousePos.y = y;

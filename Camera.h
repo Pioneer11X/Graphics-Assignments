@@ -31,7 +31,9 @@ public:
 	void IncrementRotationX(float factor);
 	void IncrementRotationY(float factor);
 
-	Camera(XMFLOAT3 _position,float _rotationX, float _rotationY);
+	void SetProjectionMatrix(int _width, int _height);
+
+	Camera(XMFLOAT3 _position,float _rotationX, float _rotationY, int _width, int _height);
 	~Camera();
 };
 

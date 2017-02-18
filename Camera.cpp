@@ -41,11 +41,13 @@ void Camera::MoveForward(float factor)
 	dirty = true;
 }
 
-Camera::Camera(XMFLOAT3 _position, float _rotationX, float _rotationY)
+Camera::Camera(XMFLOAT3 _position, float _rotationX, float _rotationY, int _width, int _height)
 {
 	position = _position;
 	rotationX = _rotationX;
 	rotationY = _rotationY;
+
+	SetProjectionMatrix(_width, _height);
 
 	dirty = true;
 	Update();
@@ -82,10 +84,23 @@ void Camera::IncrementRotationX(float factor)
 
 void Camera::IncrementRotationY(float factor)
 {
-	if (rotationY + factor < 0.6f & rotationY + factor > -0.6f) {
+	//if (rotationY + factor < 0.6f & rotationY + factor > -0.6f) {
 		rotationY += factor;
 		dirty = true;
-	}
+	//}
+}
+
+void Camera::SetProjectionMatrix(int _width, int _height)
+{
+	// Create the Projection matrix
+	// - This should match the window's aspect ratio, and also update anytime
+	//   the window resizes (which is already happening in OnResize() below)
+	XMMATRIX P = XMMatrixPerspectiveFovLH(
+		0.25f * 3.1415926535f,		// Field of View Angle
+		(float)_width / _height,		// Aspect ratio
+		0.1f,						// Near clip plane distance
+		100.0f);					// Far clip plane distance
+	XMStoreFloat4x4(&projectionMatrix, XMMatrixTranspose(P)); // Transpose for HLSL!
 }
 
 

@@ -1,5 +1,9 @@
 #pragma once
 #include "Mesh.h"
+#include "Material.h"
+#include "Camera.h"
+#include "Lights.h"
+#include "vector"
 
 using namespace DirectX;
 
@@ -21,6 +25,8 @@ class Entity
 	bool dirty; // This is true if the one of the components have been changed and we need to recreate the WorldMatrix
 
 	Mesh* entityMesh;
+	Material* entityMaterial;
+
 
 public:
 
@@ -38,7 +44,9 @@ public:
 	void MoveRightUsingMatrix(float factor);
 	void MoveUpUsingMatrix(float factor);
 
-	Entity(Mesh * _entityMesh, XMFLOAT3 _position = XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3 _rotation = XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3 _scale = XMFLOAT3(0.5f, 0.5f, 0.5f));
+	void PrepareShaders(Camera * _camera, std::vector<DirectionalLight> _directionalLights);
+
+	Entity(Mesh * _entityMesh, Material* _entityMaterial, XMFLOAT3 _position = XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3 _rotation = XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3 _scale = XMFLOAT3(0.5f, 0.5f, 0.5f));
 	~Entity();
 };
 

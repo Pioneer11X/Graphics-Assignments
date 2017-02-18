@@ -1,10 +1,12 @@
-#pragma once
+﻿#pragma once
 
 #include "Entity.h"
 #include "SimpleShader.h"
 #include <DirectXMath.h>
 #include "vector"
 #include "Camera.h"
+#include "Lights.h"
+#include "WICTextureLoader.h"
 
 
 class Game
@@ -15,15 +17,14 @@ public:
 	Game(HINSTANCE hInstance);
 	~Game();
 
-	// Overridden setup and game loop methods, which
-	// will be called automatically
+	// అన్ని ఫంక్ట్శన్లు
 	void Init();
 	void OnResize();
 	void Update(float deltaTime, float totalTime);
 	void Draw(float deltaTime, float totalTime);
 	void DrawEntity(Entity* _entity);
 
-	// Overridden mouse input helper methods
+	// మౌస్ తో వచ్చే ఇన్పుట్లు
 	void OnMouseDown(WPARAM buttonState, int x, int y);
 	void OnMouseUp(WPARAM buttonState, int x, int y);
 	void OnMouseMove(WPARAM buttonState, int x, int y);
@@ -39,15 +40,17 @@ private:
 	SimpleVertexShader* vertexShader;
 	SimplePixelShader* pixelShader;
 
-	// The matrices to go from model space to screen space
-	DirectX::XMFLOAT4X4 projectionMatrix;
-
-	// Keeps track of the old mouse position.  Useful for 
-	// determining how far the mouse moved in a single frame.
+	// దీనితో మౌస్ ఇంతకు ముందు ఎక్కడ వుందో చూడొచ్చు.
 	POINT prevMousePos;
 
 	Mesh * triangleMesh;
 	Mesh * squareMesh;
+	Mesh * cubeMesh;
+	Mesh * helixMesh;
+	Mesh * coneMesh;
+	Mesh * cylinderMesh;
+	Mesh * torusMesh;
+	Mesh * sphereMesh;
 
 	Entity* triangleEntity;
 	Entity* triangleEntity1;
@@ -59,6 +62,14 @@ private:
 	std::vector<Entity *> entityVector;
 
 	Camera* newCamera;
+	Material* newMaterial;
+	Material* anotherMaterial;
 
+	std::vector<DirectionalLight> directionalLights;
+
+	ID3D11ShaderResourceView* SRV;
+	ID3D11SamplerState* sampler;
+
+	ID3D11ShaderResourceView* anotherSRV;
 };
 

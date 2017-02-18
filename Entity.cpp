@@ -1,5 +1,5 @@
 #include "Entity.h"
-
+#include "Lights.h"
 
 
 void Entity::UpdateWorldMatrix()
@@ -80,8 +80,40 @@ void Entity::MoveUpUsingMatrix(float factor)
 	dirty = true;
 }
 
-Entity::Entity(Mesh * _entityMesh, XMFLOAT3 _position, XMFLOAT3 _rotation, XMFLOAT3 _scale)
+void Entity::PrepareShaders(Camera * _camera, std::vector<DirectionalLight> _directionalLights )
 {
+	
+	SimpleVertexShader * localVertexShader = entityMaterial->GetVertexShader();
+	SimplePixelShader * localPixelShader = entityMaterial->GetPixelShader();
+
+	/*localPixelShader->SetData("dlight", &_directionalLight, sizeof(DirectionalLight));*/
+
+	// Fix this use an iterator.
+	localPixelShader->SetData("dlight", &_directionalLights[0], sizeof(DirectionalLight));
+	localPixelShader->SetData("dlight2", &_directionalLights[1], sizeof(DirectionalLight));
+
+	localVertexShader->SetMatrix4x4("world", this->GetWorldMatrix());
+	localVertexShader->SetMatrix4x4("view", _camera->GetViewMatrix());
+	localVertexShader->SetMatrix4x4("projection", _camera->GetProjectionMatrix());
+	localVertexShader->CopyAllBufferData();
+	localVertexShader->SetShader();
+
+	localPixelShader->SetFloat3("directionalLightDirection", XMFLOAT3(1, 0, 0));
+	localPixelShader->SetFloat4("directionalLightColor", XMFLOAT4(1, 0.1f, 0.1f, 1));
+	localPixelShader->SetFloat3("pointLightPosition", XMFLOAT3(2, 2, 0));
+	localPixelShader->SetFloat4("pointLightColor", XMFLOAT4(0.1, 0.1f, 1, 1));
+	localPixelShader->SetFloat3("cameraPosition", XMFLOAT3(0, 0, -5));
+
+	localPixelShader->SetShaderResourceView("srv", entityMaterial->GetShaderResourceView());
+	localPixelShader->SetSamplerState("samp", entityMaterial->GetSamplerState());
+
+	localPixelShader->CopyAllBufferData();
+	localPixelShader->SetShader();
+}
+
+Entity::Entity(Mesh * _entityMesh, Material * _entityMaterial, XMFLOAT3 _position, XMFLOAT3 _rotation, XMFLOAT3 _scale)
+{
+	entityMaterial = _entityMaterial;
 	entityMesh = _entityMesh;
 	position = _position;
 	rotation = _rotation;

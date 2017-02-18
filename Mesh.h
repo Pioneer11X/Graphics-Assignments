@@ -1,6 +1,10 @@
 #pragma once
 #include "Vertex.h"
 #include "DXCore.h"
+#include "vector"
+#include "fstream"
+
+using namespace DirectX;
 
 class Mesh
 {
@@ -16,6 +20,7 @@ class Mesh
 
 public:
 	Mesh(Vertex* _vertices, int _vertexCount, int* _indices, int _indexCount, ID3D11Device* _inputDevice);
+	Mesh(char* fileName, ID3D11Device* _device);
 	~Mesh();
 
 	void SetBuffers();
